@@ -7,7 +7,7 @@ const AdminSettingsModal: React.FC = () => {
   const { isSettingsModalOpen, setIsSettingsModalOpen, admins, addAdmin, removeAdmin, toggleSuperAdmin, updateAdminPin, currentAdmin } = useAdmin();
   const { showToast } = useToast();
   
-  const [activeTab, setActiveTab] = useState<'security' | 'team'>('security');
+  const [activeTab, setActiveTab] = useState<'security' | 'team' | 'sync'>('security');
   
   // Security states
   const [oldPin, setOldPin] = useState('');
@@ -19,6 +19,10 @@ const AdminSettingsModal: React.FC = () => {
   const [newEmail, setNewEmail] = useState('');
   const [newAdminPin, setNewAdminPin] = useState('');
   const [newAdminIsSuper, setNewAdminIsSuper] = useState(false);
+
+  // Sync state
+  const [exportData, setExportData] = useState('');
+  const [importData, setImportData] = useState('');
 
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +50,39 @@ const AdminSettingsModal: React.FC = () => {
     setNewName(''); setNewEmail(''); setNewAdminPin(''); setNewAdminIsSuper(false); setError(null);
   };
 
+  const generateExport = () => {
+    const allData: Record<string, string> = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('basile_')) {
+        allData[key] = localStorage.getItem(key) || '';
+      }
+    }
+    const json = JSON.stringify(allData, null, 2);
+    setExportData(json);
+    showToast("Code de déploiement généré !");
+  };
+
+  const handleImport = () => {
+    try {
+      const data = JSON.parse(importData);
+      Object.keys(data).forEach(key => {
+        if (key.startsWith('basile_')) {
+          localStorage.setItem(key, data[key]);
+        }
+      });
+      showToast("✅ Configuration importée ! Rechargez la page.");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e) {
+      setError("Code d'importation invalide.");
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(exportData);
+    showToast("Copié dans le presse-papier !");
+  };
+
   const hasFullControl = currentAdmin?.isSuperAdmin;
 
   return (
@@ -63,21 +100,27 @@ const AdminSettingsModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex bg-white border-b border-slate-50">
+        <div className="flex bg-white border-b border-slate-50 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('security')}
-            className={`flex-1 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'security' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
+            className={`flex-1 min-w-[120px] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'security' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
           >
             Sécurité
           </button>
           {hasFullControl && (
             <button 
               onClick={() => setActiveTab('team')}
-              className={`flex-1 py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'team' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
+              className={`flex-1 min-w-[120px] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'team' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
             >
               Équipe ({admins.length})
             </button>
           )}
+          <button 
+            onClick={() => setActiveTab('sync')}
+            className={`flex-1 min-w-[120px] py-5 text-[10px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'sync' ? 'border-orange-500 text-orange-500' : 'border-transparent text-slate-400'}`}
+          >
+            Synchronisation
+          </button>
         </div>
 
         <div className="p-8 md:p-10 overflow-y-auto">
@@ -87,7 +130,7 @@ const AdminSettingsModal: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'security' ? (
+          {activeTab === 'security' && (
             <form onSubmit={handleUpdatePin} className="space-y-6">
               <div className="space-y-4 text-left">
                 <div>
@@ -107,7 +150,9 @@ const AdminSettingsModal: React.FC = () => {
               </div>
               <button type="submit" className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-100">Mettre à jour mon PIN</button>
             </form>
-          ) : (
+          )}
+
+          {activeTab === 'team' && (
             <div className="space-y-10 text-left">
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Accès Actifs</h4>
@@ -164,6 +209,62 @@ const AdminSettingsModal: React.FC = () => {
                 </div>
                 <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-200">Ajouter à l'Équipe</button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'sync' && (
+            <div className="space-y-8 text-left">
+              <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100">
+                <h4 className="text-[10px] font-black uppercase text-orange-600 tracking-widest mb-4">🚀 Publier mes changements en ligne</h4>
+                <p className="text-slate-600 text-xs leading-relaxed mb-6">
+                  Le LocalStorage enregistre vos modifications uniquement sur votre navigateur actuel. 
+                  Pour que **tous vos visiteurs** voient vos nouvelles photos et tarifs, vous devez générer ce code et me l'envoyer.
+                </p>
+                
+                {exportData ? (
+                  <div className="space-y-4 animate-fade-in">
+                    <div className="relative">
+                      <textarea 
+                        readOnly 
+                        className="w-full h-48 p-4 bg-white border border-orange-200 rounded-2xl text-[8px] font-mono outline-none resize-none"
+                        value={exportData}
+                      />
+                      <button 
+                        onClick={copyToClipboard}
+                        className="absolute top-3 right-3 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-lg"
+                      >
+                        Copier
+                      </button>
+                    </div>
+                    <p className="text-[9px] font-bold text-orange-600 italic">👉 Copiez ce code et envoyez-le à Basile ou au développeur.</p>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={generateExport}
+                    className="w-full py-4 bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-orange-100"
+                  >
+                    Générer le code de déploiement
+                  </button>
+                )}
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">📥 Importer une configuration</h4>
+                <p className="text-slate-500 text-[10px] mb-4">Utilisez cette option pour restaurer vos données sur un autre appareil.</p>
+                <textarea 
+                  className="w-full h-32 p-4 bg-white border border-slate-200 rounded-2xl text-[8px] font-mono outline-none resize-none mb-4"
+                  placeholder="Collez le code JSON ici..."
+                  value={importData}
+                  onChange={e => setImportData(e.target.value)}
+                />
+                <button 
+                  onClick={handleImport}
+                  disabled={!importData}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-30"
+                >
+                  Importer & Recharger
+                </button>
+              </div>
             </div>
           )}
         </div>

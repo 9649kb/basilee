@@ -153,7 +153,7 @@ const About: React.FC = () => {
           <div className="absolute -top-10 -left-10 w-40 h-40 bg-orange-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob"></div>
           <div className="absolute -bottom-10 right-0 w-40 h-40 bg-blue-100 rounded-full mix-blend-multiply filter blur-2xl opacity-70 animate-blob animation-delay-2000"></div>
           
-          <div className={`relative z-10 rounded-[3rem] overflow-hidden shadow-2xl ${isAdmin ? 'ring-4 ring-blue-500 ring-dashed ring-offset-8' : ''}`}>
+          <div className={`relative z-10 rounded-[3rem] overflow-hidden shadow-2xl ${isAdmin ? 'ring-4 ring-blue-500 ring-dashed ring-offset-8 transition-all' : ''}`}>
             <img 
               src={data.image} 
               alt="Basile Kadjolo" 
@@ -345,13 +345,48 @@ const About: React.FC = () => {
             <h3 className="text-2xl font-black text-slate-900 mb-8">Configuration Profil & Lead Magnet</h3>
             
             <form onSubmit={handleSaveAll} className="space-y-8">
+              {/* Photo de Profil de la section */}
+              <div className="space-y-6 bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100">
+                <h4 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-4">Photo de Profil (Section À propos)</h4>
+                <div className="flex flex-col md:flex-row gap-6 items-center">
+                   <div className="w-40 h-48 rounded-3xl overflow-hidden bg-white border-4 border-white shadow-xl flex-shrink-0">
+                      <img src={tempData.image} className="w-full h-full object-cover" alt="Preview" />
+                   </div>
+                   <div className="flex-1 space-y-4 w-full">
+                      <div>
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-2 tracking-widest">Option 1 : Lien URL (Recommandé)</label>
+                        <input 
+                          type="text" 
+                          className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl outline-none text-xs" 
+                          value={tempData.image} 
+                          onChange={e => setTempData({...tempData, image: e.target.value})} 
+                          placeholder="https://image-serveur.com/photo.jpg" 
+                        />
+                      </div>
+                      <div className="relative">
+                        <label className="block text-[9px] font-black uppercase text-slate-400 mb-2 tracking-widest">Option 2 : Fichier Local</label>
+                        <button 
+                          type="button" 
+                          onClick={() => fileInputRef.current?.click()} 
+                          className="w-full py-3 bg-white text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-dashed border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                        >
+                          📸 Charger une photo
+                        </button>
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                      </div>
+                   </div>
+                </div>
+              </div>
+
               {/* Onglet Profil Rapide */}
               <div className="space-y-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                <h4 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-4">Infos de Base</h4>
+                <h4 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-4">Contenu Textuel</h4>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <input className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none" value={tempData.title} onChange={e => setTempData({...tempData, title: e.target.value})} placeholder="Titre de section" />
-                  <input className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none" value={tempData.yearsExp} onChange={e => setTempData({...tempData, yearsExp: e.target.value})} placeholder="Expérience (ex: 05+)" />
+                  <input className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none font-bold" value={tempData.title} onChange={e => setTempData({...tempData, title: e.target.value})} placeholder="Titre de section" />
+                  <input className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none font-bold" value={tempData.yearsExp} onChange={e => setTempData({...tempData, yearsExp: e.target.value})} placeholder="Expérience (ex: 05+)" />
                 </div>
+                <textarea rows={3} className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none text-sm leading-relaxed" value={tempData.description1} onChange={e => setTempData({...tempData, description1: e.target.value})} placeholder="Paragraphe 1" />
+                <textarea rows={3} className="w-full px-5 py-4 bg-white border border-slate-100 rounded-xl outline-none text-sm leading-relaxed" value={tempData.description2} onChange={e => setTempData({...tempData, description2: e.target.value})} placeholder="Paragraphe 2" />
               </div>
 
               {/* Section Cadeau (Lead Magnet) */}
